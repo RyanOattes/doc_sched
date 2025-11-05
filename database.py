@@ -45,6 +45,12 @@ def init_schema():
               ft_fraction NUMERIC
               )
               """) 
+    run_query("""
+              CREATE TABLE IF NOT EXISTS doc_sched.case_mgr_to_doc_mappings (
+              doc_id TEXT,
+              case_mgr_id TEXT
+              )
+              """) 
 
 def check_period_exists(period):
     query_sql = f"""
@@ -96,5 +102,12 @@ def get_users():
     query_sql = f"""
         SELECT id, type, first_name, last_name, ft_fraction
         FROM doc_sched.users
+        """
+    return get_query(query_sql)
+
+def get_doc_mappings():
+    query_sql = f"""
+        SELECT doc_id, case_mgr_id
+        FROM doc_sched.case_mgr_to_doc_mappings
         """
     return get_query(query_sql)
