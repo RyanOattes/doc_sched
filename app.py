@@ -2,7 +2,7 @@ import datetime
 import calendar
 import streamlit as st
 
-from database import get_query, run_query, init_schema, add_period, check_period_exists, get_periods, delete_period
+from database import init_schema, add_period, check_period_exists, get_periods, delete_period, get_users
 
 st.set_page_config(layout="wide")
 
@@ -14,7 +14,14 @@ if "init" not in st.session_state:
     st.session_state["init"] = True
     init_schema()
 
-selected_user = st.selectbox("Pick a user", ("Lachlan", "Ryan", "Amelia", "Andrea"))
+user_list = get_users()
+user_options = []
+for u in user_list:
+    user_options.append(u["last_name"] + ", " + u["first_name"] + " (" + u["id"] + ")")
+selected_user_option = st.selectbox("Pick a user", user_options)
+selected_user_index = user_options.index(selected_user_option)
+selected_user = user_list[selected_user_index]["id"]
+
 selected_year = st.selectbox("Pick a year", (2025, 2026, 2027), index=0)
 selected_month = st.selectbox("Pick a month", (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12), index=datetime.datetime.now().month - 1)
 
@@ -39,7 +46,8 @@ with col2:
         "slot": selected_slot, 
         "user": selected_user,
         "year": selected_year,
-        "month": selected_month
+        "month": selected_month,
+        "type": "case_mgr_na"
         }
 
     select_now = st.button("Add a Period")
@@ -61,18 +69,19 @@ with col1:
 with col3:
     existing_periods = get_periods(selected_user, selected_year, selected_month)
     
-    deletable_items = []
-    for p in existing_periods:
-        deletable_items.append(p["date"].strftime('%Y-%m-%d') + " " + p["slot"])
-    
-    item_to_delete = st.selectbox("Pick a period", deletable_items)
+    if len(existing_periods) > 0:
+        deletable_items = []
+        for p in existing_periods:
+            deletable_items.append(p["date"].strftime('%Y-%m-%d') + " " + p["slot"])
+        
+        item_to_delete = st.selectbox("Pick a period", deletable_items)
 
-    index_to_delete = deletable_items.index(item_to_delete)
+        index_to_delete = deletable_items.index(item_to_delete)
 
-    period_to_delete = existing_periods[index_to_delete]
+        period_to_delete = existing_periods[index_to_delete]
 
-    delete_now = st.button("Delete")
-    if delete_now:
-        #print(period_to_delete)
-        delete_period(period_to_delete)
-        st.rerun()
+        delete_now = st.button("Delete")
+        if delete_now:
+            #print(period_to_delete)
+            delete_period(period_to_delete)
+            st.rerun()

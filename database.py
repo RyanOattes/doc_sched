@@ -28,6 +28,7 @@ def init_schema():
               """)
     run_query("""
               CREATE TABLE IF NOT EXISTS doc_sched.periods (
+              type TEXT,
               user_name TEXT,
               year INT,
               month INT,
@@ -35,6 +36,15 @@ def init_schema():
               slot TEXT
               )
               """)
+    run_query("""
+              CREATE TABLE IF NOT EXISTS doc_sched.users (
+              id TEXT,
+              type TEXT,
+              first_name TEXT,
+              last_name TEXT,
+              ft_fraction NUMERIC
+              )
+              """) 
 
 def check_period_exists(period):
     query_sql = f"""
@@ -45,25 +55,24 @@ def check_period_exists(period):
         AND month={period["month"]}
         AND date='{period["date"]}'
         AND slot='{period["slot"]}'
+        AND type='{period["type"]}'
         """
     results = get_query(query_sql)
     if len(results) == 0:
-        print("Period Not Found")
         return False
     else:
-        print("Period Exists")
         return True
     
 def add_period(period):
     query_sql = f"""
-        INSERT INTO doc_sched.periods (user_name, year, month, date, slot)
-        VALUES ('{period["user"]}', {period["year"]}, {period["month"]}, '{period["date"]}', '{period["slot"]}')
+        INSERT INTO doc_sched.periods (type, user_name, year, month, date, slot)
+        VALUES ('{period["type"]}', '{period["user"]}', {period["year"]}, {period["month"]}, '{period["date"]}', '{period["slot"]}')
         """
     run_query(query_sql)
 
 def get_periods(user, year, month):
     query_sql = f"""
-        SELECT user_name, year, month, date, slot
+        SELECT type, user_name, year, month, date, slot
         FROM doc_sched.periods
         WHERE user_name='{user}'
         AND year={year}
@@ -79,5 +88,13 @@ def delete_period(period):
         AND month={period["month"]}
         AND date='{period["date"]}'
         AND slot='{period["slot"]}'
+        AND type='{period["type"]}'
         """
     run_query(query_sql)
+
+def get_users():
+    query_sql = f"""
+        SELECT id, type, first_name, last_name, ft_fraction
+        FROM doc_sched.users
+        """
+    return get_query(query_sql)
