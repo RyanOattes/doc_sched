@@ -37,6 +37,8 @@ def generate_schedule(selected_year, selected_month):
     # Expand Days to Half Days
     ############################
 
+    periods_by_user = {}
+
     doc_slots = []
     for u in users:
         if user_role_lookup[u["id"]] == "doc":
@@ -50,6 +52,8 @@ def generate_schedule(selected_year, selected_month):
                     doc_slots.append(temp_period_pm)
                 else:
                     doc_slots.append(p)
+        else:
+            periods_by_user[u["id"]] = get_periods(u["id"], selected_year, selected_month)
 
     print("Doc Slots:")
     for s in doc_slots:
@@ -88,6 +92,15 @@ def generate_schedule(selected_year, selected_month):
         if score["deal_breaker"]:
             continue
 
+        # Check to make sure case managers aren't scheduled on blocked days
+        for i, slot_filler in enumerate(opt):
+            for day_off in periods_by_user[slot_filler["id"]]:
+                if doc_slots[i]["date"] == day_off["date"]:
+                    score["deal_breaker"] = True
+
+        if score["deal_breaker"]:
+            continue
+
         # Calculate deviation from fair share of doc days
         user_actual_slots = {}
         for slot_filler in opt:
@@ -107,9 +120,10 @@ def generate_schedule(selected_year, selected_month):
 
         # Check for even distribution of slots
         even_score = 0
-        for i, slot_filler in enumerate(opt[1:]):
-            if opt[i]["id"] == opt[i-1]["id"]:
-                even_score += 1
+        for i, slot_filler in enumerate(opt):
+            if i > 0:
+                if opt[i]["id"] == opt[i-1]["id"]:
+                    even_score += 1
         score["even_score"] = even_score
 
         score["alloc_score"] += score["even_score"]
